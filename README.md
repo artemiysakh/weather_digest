@@ -1,70 +1,181 @@
-# Getting Started with Create React App
+# Погодный дайджест
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Небольшая консольная утилита на Node.js для получения прогноза погоды. Принимает один
+или несколько городов, ходит в открытый API Open-Meteo (ключ не нужен), показывает
+прогноз в терминале и складывает отчёт в файл. Если запустить её второй раз за день по
+тому же городу — данные возьмутся из файла, без запроса в сеть.
 
-## Available Scripts
+Делал как учебный проект: цель была потренироваться в async/await, разбиении кода на
+модули и аккуратной работе с REST API.
 
-In the project directory, you can run:
+## Что нужно для работы
 
-### `npm start`
+- Node.js 20.6 или новее. Версия важна: используется встроенный `fetch`, которого не
+  было в старых Node. Проверить можно так:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+  ```
+  node --version
+  ```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- npm — поставляется вместе с Node.
+- Доступ в интернет — утилита ходит на open-meteo.com.
 
-### `npm test`
+## Установка
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Клонирую репозиторий и перехожу в папку:
 
-### `npm run build`
+```
+git clone https://github.com/artemiysakh/weather_digest
+cd weather_digest
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Ставлю зависимости:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+npm install
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Копирую шаблон окружения:
 
-### `npm run eject`
+```
+cp .env.example .env
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+В Windows (PowerShell) то же самое:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+Copy-Item .env.example .env
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Если не копировать `.env` — тоже работает, все параметры имеют дефолты прямо в коде.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Переменные окружения
 
-## Learn More
+Все настройки читаются из `.env`. Шаблон лежит в `.env.example`, сам `.env` в
+репозиторий не попадает.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+| Переменная | По умолчанию | Что делает |
+|------------|--------------|------------|
+| `GEO_API_URL` | `https://geocoding-api.open-meteo.com/v1/search` | Адрес геокодера |
+| `METEO_API_URL` | `https://api.open-meteo.com/v1/forecast` | Адрес сервиса прогноза |
+| `REQUEST_TIMEOUT_MS` | `5000` | Сколько миллисекунд ждать ответа, потом обрывать запрос |
+| `REPORTS_DIR` | `reports` | Куда складывать отчёты |
+| `TEMPERATURE_UNIT` | `celsius` | Единицы температуры: `celsius` или `fahrenheit` |
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Как запускать
 
-### Code Splitting
+Общий вид:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
+node src/index.js --city "<города>" [--days <1-7>] [--no-cache]
+```
 
-### Analyzing the Bundle Size
+### Параметры
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+| Параметр | Обязателен | Описание |
+|----------|------------|----------|
+| `-c, --city <cities>` | да | Один город или несколько через запятую |
+| `-d, --days <number>` | нет | Сколько дней показывать, от 1 до 7. По умолчанию 3 |
+| `--no-cache` | нет | Игнорировать сохранённый отчёт и запросить данные заново |
+| `-h, --help` | — | Справка |
 
-### Making a Progressive Web App
+### Примеры
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+node src/index.js --city "Нижний Новгород"
+node src/index.js --city "Москва,Казань,Сочи" --days 5
+node src/index.js --city "Москва" --days 3 --no-cache
+npm start -- --city "Москва"
+node src/index.js --help
+```
 
-### Advanced Configuration
+## Пример вывода
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```
+=== Нижний Новгород, Россия ===
+Координаты: 56.3287, 44.002
+Отчёт: reports/Нижний Новгород-2026-09-13.json
 
-### Deployment
+Дата        | Мин   | Макс  | Осадки, мм
+------------|-------|-------|------------
+2026-09-13  |   7.7 |  16.2 |          0
+2026-09-14  |   9.2 |  18.4 |          0
+2026-09-15  |  11.7 |  18.6 |        0.1
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+=== Москва, Россия (из кэша) ===
+Координаты: 55.7522, 37.6156
 
-### `npm run build` fails to minify
+Дата        | Мин   | Макс  | Осадки, мм
+------------|-------|-------|------------
+2026-09-13  |     8 |    15 |          0
+2026-09-14  |     9 |    17 |        1.2
+2026-09-15  |     7 |    14 |        3.4
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Итого: успешно 2 (из кэша 1), с ошибкой 0
+```
+
+Если по какому-то городу не получилось — он отмечается отдельной строкой, остальные
+всё равно выводятся:
+
+```
+✗ Абракадабра: Город "Абракадабра" не найден
+```
+
+## Ошибки, которые обрабатываются
+
+| Что случилось | Что покажет |
+|---------------|-------------|
+| Забыл `--city` | `error: required option '-c, --city <cities>' not specified` |
+| `--city` пустой или из одних запятых | `--city не может быть пустым` |
+| `--days` вне 1–7 или не число | `--days должно быть целым числом от 1 до 7` |
+| Города нет в базе | `Город "<название>" не найден` |
+| Сервер ответил 4xx | `HTTP 400 Bad Request — <url>` |
+| Сервер ответил 5xx | `HTTP 500 Internal Server Error — <url>` |
+| Нет интернета | `Нет соединения с сетью — <url>` |
+| Соединение отклонено | `Соединение отклонено — <url>` |
+| Запрос висит дольше таймаута | `Превышен таймаут 5000 мс — <url>` |
+| В ответе не JSON | `Некорректный JSON в ответе — <url>` |
+| Файл кэша побился | Молча игнорируется, данные запрашиваются заново |
+
+Стек-трейсы наружу не показываю — только понятное сообщение.
+
+## Коды завершения
+
+| Код | Когда |
+|-----|-------|
+| `0` | Всё хорошо, все города обработаны |
+| `1` | Ошибка: неверные аргументы или сбой хотя бы по одному городу |
+
+## Что где лежит
+
+```
+weather_digest/
+├── src/
+│   ├── index.js              точка входа: разбор аргументов и запуск
+│   ├── config.js             чтение переменных окружения
+│   ├── api/
+│   │   └── client.js         запросы к Open-Meteo
+│   ├── services/
+│   │   └── digest.js         обработка городов
+│   ├── storage/
+│   │   └── cache.js          чтение и запись отчётов
+│   └── format/
+│       └── output.js         вывод в терминал
+├── reports/                  отчёты (создаётся сам, в .gitignore)
+├── .env.example              шаблон переменных окружения
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+Коротко про модули:
+
+- `src/index.js` — разбирает аргументы через `commander`, валидирует и запускает
+  обработку.
+- `src/config.js` — в одном месте читает все переменные окружения с дефолтами.
+- `src/api/client.js` — HTTP-клиент: `AbortController` для таймаута, проверка статуса,
+  обработка сетевых ошибок и битого JSON.
+- `src/services/digest.js` — обрабатывает города параллельно, ошибка по одному не
+  роняет остальные.
+- `src/storage/cache.js` — кэш по дате: `reports/{город}-{ГГГГ-ММ-ДД}.json`.
+- `src/format/output.js` — таблица прогноза и итоговая строка.
