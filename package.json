@@ -1,0 +1,20 @@
+{
+  "name": "weather-digest",
+  "version": "1.0.0",
+  "description": "Консольная утилита «Погодный дайджест» (Open-Meteo)",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "start:nocache": "node --env-file-if-exists=.env src/index.js --no-cache",
+    "example": "node --env-file-if-exists=.env src/index.js --city \"Нижний Новгород,Москва,Сочи\" --days 3"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.6.1"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  }
+}
